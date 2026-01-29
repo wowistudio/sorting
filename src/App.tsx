@@ -1,18 +1,19 @@
+import Home from "@/pages/Home";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import Home from "./pages/Home";
-import Other from "./pages/Other";
 
 import './App.css';
+import { ThemeProvider } from "./components/theme-provider";
 
 function App() {
     return (
         <div className="w-full h-full">
-            <BrowserRouter>
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/other" element={<Other />} />
-                </Routes>
-            </BrowserRouter>
+            <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+                <BrowserRouter>
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                    </Routes>
+                </BrowserRouter>
+            </ThemeProvider>
         </div>
     )
 }
