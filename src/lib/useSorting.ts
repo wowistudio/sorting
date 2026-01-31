@@ -18,11 +18,39 @@ function useSorting(algorithm: SortingAlgorithm = "bubble") {
     const [stepMessages, setStepMessages] = useState<string[]>([]);
     const [throttleMs, setThrottleMs] = useState(250);
     const [isSorting, setIsSorting] = useState(false);
+    const [historyIndex, setHistoryIndex] = useState(-1);
 
     const STEP_MESSAGE_BUFFER_SIZE = 5;
 
     const generatorRef = useRef<Generator<SortState, void, unknown> | null>(null);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const historyRef = useRef<SortState[]>([]);
+
+    // Helper to derive step messages from history
+    const getStepMessagesFromHistory = (index: number): string[] => {
+        const history = historyRef.current;
+        const start = Math.max(0, index - STEP_MESSAGE_BUFFER_SIZE + 1);
+        return history
+            .slice(start, index + 1)
+            .map(s => s.stepMessage)
+            .filter((msg): msg is string => msg !== undefined);
+    };
+
+    // Helper to apply a state from history
+    const applyState = (state: SortState, index: number) => {
+        setList(state.array);
+        setCurrentIndex(state.currentIndex);
+        setComparingIndex(state.comparingIndex);
+        setPartitionLow(state.partitionLow);
+        setPartitionHigh(state.partitionHigh);
+        setPivotIndex(state.pivotIndex);
+        setPartitionI(state.partitionI);
+        setSortedFromIndex(state.sortedFromIndex);
+        setIsComplete(state.isComplete);
+        setProgress(state.progress);
+        setStepMessages(getStepMessagesFromHistory(index));
+        setHistoryIndex(index);
+    };
 
     const setListLength = (length: number) => {
         const newList = Array.from({ length }, () => Math.floor(Math.random() * 100));
@@ -38,6 +66,8 @@ function useSorting(algorithm: SortingAlgorithm = "bubble") {
         setProgress(0);
         setStepMessages([]);
         setIsSorting(false);
+        setHistoryIndex(-1);
+        historyRef.current = [];
 
         generatorRef.current = null;
         if (timeoutRef.current) {
@@ -71,6 +101,8 @@ function useSorting(algorithm: SortingAlgorithm = "bubble") {
         setProgress(0);
         setStepMessages([]);
         setIsSorting(false);
+        setHistoryIndex(-1);
+        historyRef.current = [];
         generatorRef.current = null;
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
@@ -89,19 +121,10 @@ function useSorting(algorithm: SortingAlgorithm = "bubble") {
         }
 
         const state = result.value;
-        setList(state.array);
-        setCurrentIndex(state.currentIndex);
-        setComparingIndex(state.comparingIndex);
-        setPartitionLow(state.partitionLow);
-        setPartitionHigh(state.partitionHigh);
-        setPivotIndex(state.pivotIndex);
-        setPartitionI(state.partitionI);
-        setSortedFromIndex(state.sortedFromIndex);
-        setIsComplete(state.isComplete);
-        setProgress(state.progress);
-        if (state.stepMessage !== undefined) {
-            setStepMessages((prev) => [...prev.slice(-(STEP_MESSAGE_BUFFER_SIZE - 1)), state.stepMessage!]);
-        }
+        // Push to history
+        historyRef.current.push(state);
+        const newIndex = historyRef.current.length - 1;
+        applyState(state, newIndex);
 
         if (!state.isComplete) {
             timeoutRef.current = setTimeout(() => {
@@ -135,6 +158,8 @@ function useSorting(algorithm: SortingAlgorithm = "bubble") {
             setSortedFromIndex(undefined);
             setProgress(0);
             setStepMessages([]);
+            setHistoryIndex(-1);
+            historyRef.current = [];
         }
 
         setIsSorting(true);
@@ -145,17 +170,26 @@ function useSorting(algorithm: SortingAlgorithm = "bubble") {
     }, [list, algorithm, isComplete, next]);
 
     const step = useCallback(() => {
+        // Clear any pending automatic next call
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+
+        // If we're behind in history, step forward through history
+        if (historyIndex < historyRef.current.length - 1) {
+            const newIndex = historyIndex + 1;
+            const state = historyRef.current[newIndex];
+            applyState(state, newIndex);
+            return;
+        }
+
+        // Otherwise, pull from generator
         if (!generatorRef.current) {
             // If no generator exists, start one
             if (list.length === 0) return;
             const generator = sortingAlgorithms[algorithm];
             generatorRef.current = generator(list);
-        }
-
-        // Clear any pending automatic next call
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
         }
 
         const result = generatorRef.current.next();
@@ -168,20 +202,26 @@ function useSorting(algorithm: SortingAlgorithm = "bubble") {
         }
 
         const state = result.value;
-        setList(state.array);
-        setCurrentIndex(state.currentIndex);
-        setComparingIndex(state.comparingIndex);
-        setPartitionLow(state.partitionLow);
-        setPartitionHigh(state.partitionHigh);
-        setPivotIndex(state.pivotIndex);
-        setPartitionI(state.partitionI);
-        setSortedFromIndex(state.sortedFromIndex);
-        setIsComplete(state.isComplete);
-        setProgress(state.progress);
-        if (state.stepMessage !== undefined) {
-            setStepMessages((prev) => [...prev.slice(-(STEP_MESSAGE_BUFFER_SIZE - 1)), state.stepMessage!]);
+        // Push to history
+        historyRef.current.push(state);
+        const newIndex = historyRef.current.length - 1;
+        applyState(state, newIndex);
+    }, [list, algorithm, historyIndex]);
+
+    const stepBack = useCallback(() => {
+        // Clear any pending automatic next call
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
         }
-    }, [list, algorithm]);
+
+        // Can't step back if no history or already at start
+        if (historyIndex <= 0) return;
+
+        const newIndex = historyIndex - 1;
+        const state = historyRef.current[newIndex];
+        applyState(state, newIndex);
+    }, [historyIndex]);
 
     const stop = useCallback(() => {
         setIsSorting(false);
@@ -206,9 +246,11 @@ function useSorting(algorithm: SortingAlgorithm = "bubble") {
         stepMessages,
         isSorting,
         throttleMs,
+        historyIndex,
         startSort,
         next,
         step,
+        stepBack,
         stop,
         reset,
         setThrottleMs,

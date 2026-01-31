@@ -44,9 +44,11 @@ export default function Home() {
         stepMessages,
         isComplete,
         isSorting,
+        historyIndex,
         startSort,
         stop,
         step,
+        stepBack,
         reset,
         setThrottleMs,
     } = useSorting(algorithm);
@@ -138,9 +140,11 @@ export default function Home() {
                 listLength={list.length}
                 isDarkMode={isDarkMode}
                 isFast={isFast}
+                canStepBack={historyIndex > 0}
                 onStartSort={startSort}
                 onStop={stop}
                 onStep={step}
+                onStepBack={stepBack}
                 onReset={reset}
                 onToggleTheme={toggleTheme}
                 onToggleSpeed={toggleSpeed}

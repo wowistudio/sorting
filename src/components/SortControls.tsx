@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
     ArrowClockwise,
+    CaretLeft,
     CaretRight,
     Moon,
     Pause,
@@ -15,9 +16,11 @@ interface SortControlsProps {
     listLength: number;
     isDarkMode: boolean;
     isFast: boolean;
+    canStepBack: boolean;
     onStartSort: () => void;
     onStop: () => void;
     onStep: () => void;
+    onStepBack: () => void;
     onReset: () => void;
     onToggleTheme: () => void;
     onToggleSpeed: () => void;
@@ -29,9 +32,11 @@ export default function SortControls({
     listLength,
     isDarkMode,
     isFast,
+    canStepBack,
     onStartSort,
     onStop,
     onStep,
+    onStepBack,
     onReset,
     onToggleTheme,
     onToggleSpeed,
@@ -39,6 +44,31 @@ export default function SortControls({
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 flex items-end justify-center pb-4">
             <div className="flex items-center gap-3 px-4 py-3 bg-card/95 backdrop-blur-sm border rounded-full shadow-lg">
+                {/* Fast/Slow Toggle */}
+                <Button
+                    onClick={onToggleSpeed}
+                    variant="outline"
+                    className="rounded-full px-4"
+                    disabled={isSorting}
+                >
+                    {isFast ? "Fast (500ms)" : "Slow (1000ms)"}
+                </Button>
+
+                {/* Separator */}
+                <Separator orientation="vertical" className="self-stretch" />
+
+                {/* Previous Step Button */}
+                <Button
+                    onClick={onStepBack}
+                    disabled={!canStepBack || isSorting}
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full"
+                    aria-label="Previous step"
+                >
+                    <CaretLeft className="size-5" />
+                </Button>
+
                 {/* Play/Pause Button */}
                 {!isSorting ? (
                     <Button
@@ -73,16 +103,6 @@ export default function SortControls({
                     aria-label="Next step"
                 >
                     <CaretRight className="size-5" />
-                </Button>
-
-                {/* Fast/Slow Toggle */}
-                <Button
-                    onClick={onToggleSpeed}
-                    variant="outline"
-                    className="rounded-full px-4"
-                    disabled={isSorting}
-                >
-                    {isFast ? "Fast (500ms)" : "Slow (1000ms)"}
                 </Button>
 
                 {/* Reset Icon */}
