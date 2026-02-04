@@ -1,8 +1,41 @@
 import { useCallback, useRef, useState } from "react";
 import { sortingAlgorithms, type SortState, type SortingAlgorithm } from "./sorting";
 
+function generateListIds(length: number): string[] {
+    return Array.from({ length }, (_, i) => `id-${i}-${Math.random().toString(36).slice(2)}`);
+}
+
+function computeListIdsAfterReorder(
+    oldList: number[],
+    oldListIds: string[],
+    newList: number[]
+): string[] {
+    if (oldList.length !== newList.length) return generateListIds(newList.length);
+    const used = new Set<number>();
+    const newListIds = new Array<string>(newList.length);
+    for (let i = 0; i < newList.length; i++) {
+        for (let j = 0; j < oldList.length; j++) {
+            if (!used.has(j) && oldList[j] === newList[i]) {
+                newListIds[i] = oldListIds[j];
+                used.add(j);
+                break;
+            }
+        }
+    }
+    return newListIds;
+}
+
 function useSorting(algorithm: SortingAlgorithm = "bubble") {
-    const [list, setList] = useState<number[]>([8, 2, 4, 7, 1, 3, 9, 6, 5]);
+    const initialList = [8, 2, 4, 7, 1, 3, 9, 6, 5];
+    const initialListIdsRef = useRef<string[] | null>(null);
+    const [list, setList] = useState<number[]>(initialList);
+    const [listIds, setListIds] = useState<string[]>(() => {
+        const ids = generateListIds(initialList.length);
+        initialListIdsRef.current = ids;
+        return ids;
+    });
+    const prevListRef = useRef<number[]>(initialList);
+    const prevListIdsRef = useRef<string[]>(initialListIdsRef.current ?? []);
     const [currentIndex, setCurrentIndex] = useState<number>(-1);
     const [comparingIndex, setComparingIndex] = useState<number | null>(null);
     const [partitionLow, setPartitionLow] = useState<number | undefined>(undefined);
@@ -35,7 +68,16 @@ function useSorting(algorithm: SortingAlgorithm = "bubble") {
 
     // Helper to apply a state from history
     const applyState = (state: SortState, index: number) => {
-        setList(state.array);
+        const newList = state.array;
+        const newListIds = computeListIdsAfterReorder(
+            prevListRef.current,
+            prevListIdsRef.current,
+            newList
+        );
+        setList(newList);
+        setListIds(newListIds);
+        prevListRef.current = newList;
+        prevListIdsRef.current = newListIds;
         setCurrentIndex(state.currentIndex);
         setComparingIndex(state.comparingIndex);
         setPartitionLow(state.partitionLow);
@@ -51,7 +93,11 @@ function useSorting(algorithm: SortingAlgorithm = "bubble") {
 
     const setListLength = (length: number) => {
         const newList = Array.from({ length }, () => Math.floor(Math.random() * 100));
+        const newListIds = generateListIds(length);
         setList(newList);
+        setListIds(newListIds);
+        prevListRef.current = newList;
+        prevListIdsRef.current = newListIds;
         setCurrentIndex(-1);
         setComparingIndex(null);
         setPartitionLow(undefined);
@@ -77,15 +123,24 @@ function useSorting(algorithm: SortingAlgorithm = "bubble") {
         // Shuffle the existing array values, or generate a new one if empty
         if (list.length === 0) {
             const newList = Array.from({ length: 10 }, () => Math.floor(Math.random() * 100));
+            const newListIds = generateListIds(newList.length);
             setList(newList);
+            setListIds(newListIds);
+            prevListRef.current = newList;
+            prevListIdsRef.current = newListIds;
         } else {
             // Shuffle the existing array using Fisher-Yates algorithm
             const shuffled = [...list];
+            const shuffledIds = [...listIds];
             for (let i = shuffled.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                [shuffledIds[i], shuffledIds[j]] = [shuffledIds[j], shuffledIds[i]];
             }
             setList(shuffled);
+            setListIds(shuffledIds);
+            prevListRef.current = shuffled;
+            prevListIdsRef.current = shuffledIds;
         }
         setCurrentIndex(-1);
         setComparingIndex(null);
@@ -140,12 +195,17 @@ function useSorting(algorithm: SortingAlgorithm = "bubble") {
         if (isComplete) {
             // Shuffle the existing array using Fisher-Yates algorithm
             const shuffled = [...list];
+            const shuffledIds = [...listIds];
             for (let i = shuffled.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                [shuffledIds[i], shuffledIds[j]] = [shuffledIds[j], shuffledIds[i]];
             }
             arrayToSort = shuffled;
             setList(shuffled);
+            setListIds(shuffledIds);
+            prevListRef.current = shuffled;
+            prevListIdsRef.current = shuffledIds;
             setCurrentIndex(-1);
             setComparingIndex(null);
             setPartitionLow(undefined);
@@ -231,6 +291,7 @@ function useSorting(algorithm: SortingAlgorithm = "bubble") {
 
     return {
         list,
+        listIds,
         currentIndex,
         comparingIndex,
         partitionLow,

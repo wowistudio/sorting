@@ -1,3 +1,4 @@
+
 export interface SortState {
     array: number[];
     currentIndex: number;   // For quicksort: j (current element being compared)
@@ -223,6 +224,7 @@ function* quickSortGenerator(arr: number[]): Generator<SortState, void, unknown>
 }
 
 function* mergeSortGenerator(arr: number[]): Generator<SortState, void, unknown> {
+    let progress = 0;
     const array = [...arr];
     const totalItems = array.length;
     let stepsDone = 0;
@@ -246,7 +248,7 @@ function* mergeSortGenerator(arr: number[]): Generator<SortState, void, unknown>
             currentIndex: -1,
             comparingIndex: null,
             isComplete: false,
-            progress: 0,
+            progress,
             partitionLow: low,
             partitionHigh: high,
             stepMessage: `Merging: [${left.join(", ")}] and [${right.join(", ")}]`,
@@ -254,7 +256,8 @@ function* mergeSortGenerator(arr: number[]): Generator<SortState, void, unknown>
 
         while (i < left.length && j < right.length) {
             stepsDone++;
-            const progress = Math.min(100, Math.round((stepsDone / totalStepsEstimate) * 100));
+
+            progress = Math.max(0, Math.min(100, Math.round((stepsDone / totalStepsEstimate) * 100)));
 
             const leftIdx = low + i;
             const rightIdx = mid + 1 + j;

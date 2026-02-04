@@ -26,6 +26,7 @@ export default function SortingAlgorithm({
 }: SortingAlgorithmProps) {
     const {
         list,
+        listIds,
         currentIndex,
         comparingIndex,
         partitionLow,
@@ -94,6 +95,7 @@ export default function SortingAlgorithm({
 
             <SortVisualization
                 list={list}
+                listIds={listIds}
                 currentIndex={currentIndex}
                 comparingIndex={comparingIndex}
                 partitionLow={partitionLow}
