@@ -22,6 +22,7 @@ export default function SortVisualization({
     partitionI,
     sortedFromIndex,
 }: SortVisualizationProps) {
+    console.log(list)
     return (
         <div className="flex justify-center">
             <FlipMove
@@ -43,7 +44,7 @@ export default function SortVisualization({
 
                     return (
                         <li
-                            key={value}
+                            key={`${value}-${index}`}
                             className="flex flex-col items-center justify-end flex-1 max-w-[60px]"
                         >
                             <motion.div

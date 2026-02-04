@@ -6,7 +6,7 @@ import {
     TabsContent
 } from "@/components/ui/tabs";
 import type { SortingAlgorithm as SortingAlgorithmName } from "@/lib/sorting";
-import { CaretDown, Moon, Sun } from "@phosphor-icons/react";
+import { ArrowsDownUp, CaretDown, Lightning, Moon, StackSimple, Sun } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -14,9 +14,10 @@ export default function Home() {
     const [searchParams, setSearchParams] = useSearchParams();
     const tabParam = searchParams.get("tab");
 
-    // Map URL param to algorithm: "quick" -> "quicksort", "bubble" -> "bubble"
+    // Map URL param to algorithm: "quick" -> "quicksort", "merge" -> "mergesort", "bubble" -> "bubble"
     const getAlgorithmFromParam = (param: string | null): SortingAlgorithmName => {
         if (param === "quick" || param === "quicksort") return "quicksort";
+        if (param === "merge" || param === "mergesort") return "mergesort";
         return "bubble";
     };
 
@@ -37,8 +38,8 @@ export default function Home() {
     const handleTabChange = (value: string) => {
         const newAlgorithm = value as SortingAlgorithmName;
         setAlgorithm(newAlgorithm);
-        // Update URL: "quicksort" -> "quick", "bubble" -> "bubble"
-        const urlTab = newAlgorithm === "quicksort" ? "quick" : "bubble";
+        // Update URL: "quicksort" -> "quick", "mergesort" -> "merge", "bubble" -> "bubble"
+        const urlTab = newAlgorithm === "quicksort" ? "quick" : newAlgorithm === "mergesort" ? "merge" : "bubble";
         setSearchParams({ tab: urlTab });
     };
 
@@ -50,7 +51,7 @@ export default function Home() {
     const isDarkMode = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
     const currentAlgorithmLabel =
-        algorithm === "quicksort" ? "Quick sort" : "Bubble sort";
+        algorithm === "quicksort" ? "Quick sort" : algorithm === "mergesort" ? "Merge sort" : "Bubble sort";
 
     return (
         <>
@@ -66,6 +67,13 @@ export default function Home() {
                         aria-expanded={showAlgorithmMenu}
                         onClick={() => setShowAlgorithmMenu((prev) => !prev)}
                     >
+                        {algorithm === "bubble" ? (
+                            <ArrowsDownUp className="size-4" />
+                        ) : algorithm === "quicksort" ? (
+                            <Lightning className="size-4" />
+                        ) : (
+                            <StackSimple className="size-4" />
+                        )}
                         <span className="text-xs font-medium">
                             {currentAlgorithmLabel}
                         </span>
@@ -77,24 +85,38 @@ export default function Home() {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="w-full justify-start px-3 py-2 text-xs"
+                                className="w-full justify-start px-3 py-2 text-xs gap-2"
                                 onClick={() => {
                                     handleTabChange("bubble");
                                     setShowAlgorithmMenu(false);
                                 }}
                             >
-                                Bubble sort
+                                <ArrowsDownUp className="size-4" />
+                                <span>Bubble sort</span>
                             </Button>
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="w-full justify-start px-3 py-2 text-xs"
+                                className="w-full justify-start px-3 py-2 text-xs gap-2"
                                 onClick={() => {
                                     handleTabChange("quicksort");
                                     setShowAlgorithmMenu(false);
                                 }}
                             >
-                                Quick sort
+                                <Lightning className="size-4" />
+                                <span>Quick sort</span>
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start px-3 py-2 text-xs gap-2"
+                                onClick={() => {
+                                    handleTabChange("mergesort");
+                                    setShowAlgorithmMenu(false);
+                                }}
+                            >
+                                <StackSimple className="size-4" />
+                                <span>Merge sort</span>
                             </Button>
                         </div>
                     )}
@@ -138,6 +160,17 @@ export default function Home() {
                                 worstCaseComplexity="O(n²)"
                                 memoryComplexity="O(log n)"
                                 explanation="Quicksort is a divide-and-conquer algorithm that repeatedly picks a pivot value, moves smaller or equal values to its left and larger ones to its right, and then recurses on those sub‑ranges until everything is in order."
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="mergesort" className="space-y-8 mt-6">
+                            <SortingAlgorithm
+                                algorithm="mergesort"
+                                title="Merge sort"
+                                averageComplexity="O(n log n)"
+                                worstCaseComplexity="O(n log n)"
+                                memoryComplexity="O(n)"
+                                explanation="Merge sort is a divide-and-conquer algorithm that splits the array in half recursively until subarrays have one element, then merges pairs of sorted subarrays by comparing elements from each half and placing the smaller one in order."
                             />
                         </TabsContent>
                     </Tabs>

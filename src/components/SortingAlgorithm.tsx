@@ -5,6 +5,7 @@ import SortVisualization from "@/components/SortVisualization";
 import { Badge } from "@/components/ui/badge";
 import type { SortingAlgorithm as SortingAlgorithmType } from "@/lib/sorting";
 import useSorting from "@/lib/useSorting";
+import { ThumbsDown, ThumbsUp } from "@phosphor-icons/react";
 
 interface SortingAlgorithmProps {
     algorithm: SortingAlgorithmType;
@@ -46,7 +47,7 @@ export default function SortingAlgorithm({
 
     return (
         <>
-            <div className="rounded-2xl border bg-card/70 backdrop-blur px-4 py-3 space-y-2">
+            <div className="rounded-2xl border bg-card/70 backdrop-blur px-4 py-3 space-y-3">
                 <p className="text-sm font-medium text-foreground">
                     {title}
                 </p>
@@ -60,6 +61,31 @@ export default function SortingAlgorithm({
                     <Badge variant="outline">
                         Memory: {memoryComplexity}
                     </Badge>
+                </div>
+                {/* Pros & Cons */}
+                <div className="space-y-1 text-xs">
+                    <div className="flex items-center gap-2 text-emerald-500">
+                        <ThumbsUp className="size-4" weight="fill" />
+                        <span className="font-semibold">Pro</span>
+                        <span className="text-muted-foreground">
+                            {algorithm === "mergesort"
+                                ? "Guaranteed O(n log n)"
+                                : algorithm === "quicksort"
+                                    ? "Fast average case"
+                                    : "Very simple implementation"}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-red-500">
+                        <ThumbsDown className="size-4" weight="fill" />
+                        <span className="font-semibold">Con</span>
+                        <span className="text-muted-foreground">
+                            {algorithm === "mergesort"
+                                ? "Extra memory usage"
+                                : algorithm === "quicksort"
+                                    ? "Worst-case O(n²)"
+                                    : "Extremely slow performance"}
+                        </span>
+                    </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
                     {explanation}
@@ -77,7 +103,15 @@ export default function SortingAlgorithm({
                 sortedFromIndex={sortedFromIndex}
             />
 
-            <SortLegend algorithm={algorithm} />
+            <SortLegend
+                algorithm={algorithm}
+                currentValue={currentIndex >= 0 ? list[currentIndex] : null}
+                comparingValue={
+                    comparingIndex !== null && comparingIndex >= 0
+                        ? list[comparingIndex]
+                        : null
+                }
+            />
 
             <SortProgress progress={progress} stepMessages={stepMessages} />
 

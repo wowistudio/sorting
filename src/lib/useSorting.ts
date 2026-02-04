@@ -2,10 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { sortingAlgorithms, type SortState, type SortingAlgorithm } from "./sorting";
 
 function useSorting(algorithm: SortingAlgorithm = "bubble") {
-    const [list, setList] = useState<number[]>(() =>
-        [8, 2, 4, 7, 1, 3, 9, 6, 5]
-        // Array.from({ length: 10 }, () => Math.floor(Math.random() * 100))
-    );
+    const [list, setList] = useState<number[]>([8, 2, 4, 7, 1, 3, 9, 6, 5]);
     const [currentIndex, setCurrentIndex] = useState<number>(-1);
     const [comparingIndex, setComparingIndex] = useState<number | null>(null);
     const [partitionLow, setPartitionLow] = useState<number | undefined>(undefined);
