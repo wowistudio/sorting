@@ -52,7 +52,7 @@ function* bubbleSortGenerator(arr: number[]): Generator<SortState, void, unknown
                     comparingIndex: j + 1,
                     isComplete: false,
                     progress,
-                    stepMessage: `Swapping ${a} and ${b}`,
+                    stepMessage: `Swapping ${a} and ${b} (${a} < ${b})`,
                     sortedFromIndex,
                 };
             }

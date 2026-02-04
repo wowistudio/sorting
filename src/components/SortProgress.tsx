@@ -6,7 +6,6 @@ interface SortProgressProps {
 }
 
 export default function SortProgress({ progress, stepMessages = [] }: SortProgressProps) {
-    console.log(stepMessages);
     const reversedStepMessages = [...stepMessages].reverse();
     return (
         <div className="w-full space-y-3">

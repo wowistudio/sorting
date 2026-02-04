@@ -1,4 +1,10 @@
 def partition(arr, low, high):
+    """
+    Partition step for quicksort using the Lomuto scheme.
+    Chooses the last element as the pivot and rearranges the subarray so
+    that all elements <= pivot come before it and all greater elements come after.
+    Returns the final index of the pivot.
+    """
     print('============== PARTITIONING ==============')
     print(f"{arr[low:high+1]}", "low:",low, "high:", high)
     pivot = arr[high]
@@ -7,12 +13,17 @@ def partition(arr, low, high):
         print(f"i={i}, j={j}, {arr[j]}{' ' if arr[j] <= 9 else ''} <= {pivot}")
         if arr[j] <= pivot:
             i += 1
-            print(f"Swapping: {arr[i]} and {arr[j]}")
+            print(f"Swapping: {arr[i]} and {arr[j]} ({arr[i]} < {arr[j]})")
             arr[i], arr[j] = arr[j], arr[i]
     arr[i + 1], arr[high] = arr[high], arr[i + 1]
     return i + 1
 
 def quick_sort(arr, low, high):
+    """
+    In-place quicksort.
+    Recursively partitions the array around a pivot so that more elements end up
+    in their final sorted positions after each partition step.
+    """
     if low < high:
         p = partition(arr, low, high)
         quick_sort(arr, low, p - 1)

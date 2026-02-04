@@ -1,17 +1,13 @@
-import SortControls from "@/components/SortControls";
-import SortLegend from "@/components/SortLegend";
-import SortProgress from "@/components/SortProgress";
-import SortVisualization from "@/components/SortVisualization";
+import SortingAlgorithm from "@/components/SortingAlgorithm";
 import { useTheme } from "@/components/theme-provider";
+import { Button } from "@/components/ui/button";
 import {
     Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
+    TabsContent
 } from "@/components/ui/tabs";
-import type { SortingAlgorithm } from "@/lib/sorting";
-import useSorting from "@/lib/useSorting";
-import { useEffect, useRef, useState } from "react";
+import type { SortingAlgorithm as SortingAlgorithmName } from "@/lib/sorting";
+import { CaretDown, Moon, Sun } from "@phosphor-icons/react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 export default function Home() {
@@ -19,41 +15,18 @@ export default function Home() {
     const tabParam = searchParams.get("tab");
 
     // Map URL param to algorithm: "quick" -> "quicksort", "bubble" -> "bubble"
-    const getAlgorithmFromParam = (param: string | null): SortingAlgorithm => {
+    const getAlgorithmFromParam = (param: string | null): SortingAlgorithmName => {
         if (param === "quick" || param === "quicksort") return "quicksort";
         return "bubble";
     };
 
-    const [algorithm, setAlgorithm] = useState<SortingAlgorithm>(() =>
+    const [algorithm, setAlgorithm] = useState<SortingAlgorithmName>(() =>
         getAlgorithmFromParam(tabParam)
     );
 
     const { theme, setTheme } = useTheme();
-    const [isFast, setIsFast] = useState(true); // true = 500ms, false = 1000ms
 
-    const {
-        list,
-        currentIndex,
-        comparingIndex,
-        partitionLow,
-        partitionHigh,
-        pivotIndex,
-        partitionI,
-        sortedFromIndex,
-        progress,
-        stepMessages,
-        isComplete,
-        isSorting,
-        historyIndex,
-        startSort,
-        stop,
-        step,
-        stepBack,
-        reset,
-        setThrottleMs,
-    } = useSorting(algorithm);
-
-    const prevAlgorithmRef = useRef<SortingAlgorithm>(algorithm);
+    const [showAlgorithmMenu, setShowAlgorithmMenu] = useState(false);
 
     // Sync algorithm with URL param on mount and when param changes
     useEffect(() => {
@@ -61,26 +34,12 @@ export default function Home() {
         setAlgorithm(paramAlgorithm);
     }, [tabParam]);
 
-    // Reset sorting when algorithm changes (but not on initial mount)
-    useEffect(() => {
-        if (prevAlgorithmRef.current !== algorithm) {
-            reset();
-            prevAlgorithmRef.current = algorithm;
-        }
-    }, [algorithm, reset]);
-
     const handleTabChange = (value: string) => {
-        const newAlgorithm = value as SortingAlgorithm;
+        const newAlgorithm = value as SortingAlgorithmName;
         setAlgorithm(newAlgorithm);
         // Update URL: "quicksort" -> "quick", "bubble" -> "bubble"
         const urlTab = newAlgorithm === "quicksort" ? "quick" : "bubble";
         setSearchParams({ tab: urlTab });
-    };
-
-    const toggleSpeed = () => {
-        const newSpeed = isFast ? 1000 : 500;
-        setIsFast(!isFast);
-        setThrottleMs(newSpeed);
     };
 
     const toggleTheme = () => {
@@ -90,65 +49,100 @@ export default function Home() {
 
     const isDarkMode = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
+    const currentAlgorithmLabel =
+        algorithm === "quicksort" ? "Quick sort" : "Bubble sort";
+
     return (
-        <div className="min-h-screen w-full bg-background p-8">
-            <div className="max-w-[600px] mx-auto space-y-8">
-                <Tabs value={algorithm} onValueChange={handleTabChange}>
-                    <TabsList className="w-full justify-start">
-                        <TabsTrigger value="bubble">Bubble</TabsTrigger>
-                        <TabsTrigger value="quicksort">Quicksort</TabsTrigger>
-                    </TabsList>
+        <>
+            {/* Top-right controls: algorithm + theme */}
+            <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
+                {/* Sorting algorithm selector */}
+                <div className="relative">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full flex items-center gap-2"
+                        aria-haspopup="menu"
+                        aria-expanded={showAlgorithmMenu}
+                        onClick={() => setShowAlgorithmMenu((prev) => !prev)}
+                    >
+                        <span className="text-xs font-medium">
+                            {currentAlgorithmLabel}
+                        </span>
+                        <CaretDown className="size-4" />
+                    </Button>
 
-                    <TabsContent value="bubble" className="space-y-8 mt-6">
-                        <SortVisualization
-                            list={list}
-                            currentIndex={currentIndex}
-                            comparingIndex={comparingIndex}
-                            partitionLow={partitionLow}
-                            partitionHigh={partitionHigh}
-                            pivotIndex={pivotIndex}
-                            partitionI={partitionI}
-                            sortedFromIndex={sortedFromIndex}
-                        />
-                        <SortLegend
-                            algorithm={algorithm}
-                        />
-                        <SortProgress progress={progress} stepMessages={stepMessages} />
-                    </TabsContent>
+                    {showAlgorithmMenu && (
+                        <div className="absolute right-0 mt-2 w-40 rounded-xl border bg-card/95 backdrop-blur shadow-lg py-1 z-50">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start px-3 py-2 text-xs"
+                                onClick={() => {
+                                    handleTabChange("bubble");
+                                    setShowAlgorithmMenu(false);
+                                }}
+                            >
+                                Bubble sort
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start px-3 py-2 text-xs"
+                                onClick={() => {
+                                    handleTabChange("quicksort");
+                                    setShowAlgorithmMenu(false);
+                                }}
+                            >
+                                Quick sort
+                            </Button>
+                        </div>
+                    )}
+                </div>
 
-                    <TabsContent value="quicksort" className="space-y-8 mt-6">
-                        <SortVisualization
-                            list={list}
-                            currentIndex={currentIndex}
-                            comparingIndex={comparingIndex}
-                            partitionLow={partitionLow}
-                            partitionHigh={partitionHigh}
-                            pivotIndex={pivotIndex}
-                            partitionI={partitionI}
-                        />
-                        <SortLegend
-                            algorithm={algorithm}
-                        />
-                        <SortProgress progress={progress} stepMessages={stepMessages} />
-                    </TabsContent>
-                </Tabs>
+                {/* Light/Dark Mode Toggle */}
+                <Button
+                    onClick={toggleTheme}
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full"
+                    aria-label="Toggle theme"
+                >
+                    {isDarkMode ? (
+                        <Sun className="size-5" />
+                    ) : (
+                        <Moon className="size-5" />
+                    )}
+                </Button>
             </div>
 
-            <SortControls
-                isSorting={isSorting}
-                isComplete={isComplete}
-                listLength={list.length}
-                isDarkMode={isDarkMode}
-                isFast={isFast}
-                canStepBack={historyIndex > 0}
-                onStartSort={startSort}
-                onStop={stop}
-                onStep={step}
-                onStepBack={stepBack}
-                onReset={reset}
-                onToggleTheme={toggleTheme}
-                onToggleSpeed={toggleSpeed}
-            />
-        </div>
+            <div className="min-h-screen w-full bg-background p-8">
+                <div className="max-w-[600px] mx-auto space-y-8">
+                    <Tabs value={algorithm} onValueChange={handleTabChange}>
+                        <TabsContent value="bubble" className="space-y-8 mt-6">
+                            <SortingAlgorithm
+                                algorithm="bubble"
+                                title="Bubble sort"
+                                averageComplexity="O(n²)"
+                                worstCaseComplexity="O(n²)"
+                                memoryComplexity="O(1)"
+                                explanation="Bubble sort walks through the list, comparing neighbouring values and swapping them when they are out of order, so that bigger values gradually &quot;bubble&quot; to the end and one more item is fixed in place after each pass."
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="quicksort" className="space-y-8 mt-6">
+                            <SortingAlgorithm
+                                algorithm="quicksort"
+                                title="Quicksort"
+                                averageComplexity="O(n log n)"
+                                worstCaseComplexity="O(n²)"
+                                memoryComplexity="O(log n)"
+                                explanation="Quicksort is a divide-and-conquer algorithm that repeatedly picks a pivot value, moves smaller or equal values to its left and larger ones to its right, and then recurses on those sub‑ranges until everything is in order."
+                            />
+                        </TabsContent>
+                    </Tabs>
+                </div>
+            </div>
+        </>
     );
 }
